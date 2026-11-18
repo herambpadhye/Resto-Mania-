@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taste Profile - NomNom Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script type="module" src="assets/js/firebase-config.js"></script>
+    <style>
+        :root {
+            --slide-ease: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        body {
+            background-color: var(--body-color);
+            color: var(--text-color);
+        }
+        
+        .taste-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            animation: fadeIn 0.6s var(--slide-ease);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .taste-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+        
+        .taste-header::after {
+            content: "";
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background-color: var(--first-color);
+            border-radius: 3px;
+        }
+        
+        .taste-title {
+            font-size: 2.25rem;
+            color: var(--first-color);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .taste-subtitle {
+            color: var(--text-color);
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .taste-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .taste-item {
+            background-color: var(--container-color);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .taste-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .taste-item.selected {
+            border-color: var(--first-color);
+            background-color: rgba(6, 156, 84, 0.1);
+        }
+        
+        .taste-item.selected::before {
+            content: "✓";
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: var(--first-color);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .taste-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .taste-name {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .preference-section {
+            margin-bottom: 3rem;
+            background-color: var(--container-color);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            animation: slideIn 0.6s var(--slide-ease);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preference-section:nth-child(3) {
+            animation-delay: 0.1s;
+        }
+        
+        .preference-section:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+        
+        .preference-section:nth-child(5) {
+            animation-delay: 0.3s;
+        }
+        
+        .preference-section:nth-child(6) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .preference-section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--first-color);
+            border-radius: 2px;
+        }
+        
+        .preference-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--title-color);
+            font-weight: 600;
+        }
+        
+        .preference-description {
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        
+        .spice-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .spice-option {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--text-color-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .spice-option:hover {
+            background: rgba(6, 156, 84, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .spice-option.selected {
+            background-color: var(--first-color);
+            color: white;
+            border-color: var(--first-color);
+            transform: scale(1.02);
+        }
+        
+        .spice-icon {
+            font-size: 1.2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 1rem;
+            color: var(--title-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group input, 
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--text-color-light);
+            border-radius: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            background-color: var(--body-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus, 
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--first-color);
+            box-shadow: 0 0 0 3px rgba(6, 156, 84, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .input-icon {
+            position: relative;
+        }
+        
+        .input-icon input,
+        .input-icon textarea {
+            padding-left: 2.5rem;
+        }
+        
+        .input-icon::before {
+            content: attr(data-icon);
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: var(--text-color-light);
+        }
+        
+        .actions {
+            text-align: center;
+            margin-top: 3rem;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+        
+        .proceed-btn {
+            display: inline-block;
+            background-color: var(--first-color);
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .proceed-btn::before {
+            content: "";
+            position: absolute;
+            left: -100%;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            z-index: -1;
+        }
+        
+        .proceed-btn:hover {
+            background-color: var(--first-color-alt);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(6, 156, 84, 0.3);
+        }
+        
+        .proceed-btn:hover::before {
+            left: 100%;
+        }
+        
+        .skip-link {
+            display: inline-block;
+            margin-left: 1.5rem;
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid var(--text-color-light);
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .skip-link:hover {
+            color: var(--first-color);
+            border-color: var(--first-color);
+            background-color: rgba(6, 156, 84, 0.05);
+        }
+        
+        /* Emoji selector for cuisines */
+        .cuisine-emoji {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+            line-height: 1;
+        }
+        
+        .taste-item:hover .cuisine-emoji {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .taste-item.selected .cuisine-emoji {
+            animation: bounce 0.5s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .progress-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+            padding: 0 1rem;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: var(--container-color);
+            border-radius: 3px;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: var(--first-color);
+            border-radius: 3px;
+            width: 50%; /* Will be set via JS */
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-step {
+            font-size: 0.85rem;
+            color: var(--text-color-light);
+        }
+        
+        .progress-step.active {
+            color: var(--first-color);
+            font-weight: 600;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--first-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-color-light);
+        }
+        
+        .custom-input {
+            position: relative;
+            margin-top: 1rem;
+        }
+        
+        .custom-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .custom-emoji {
+            font-size: 1.2rem;
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .taste-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            
+            .spice-options {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            
+            .spice-option {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.9rem;
+            }
+            
+            .taste-title {
+                font-size: 1.8rem;
+            }
+            
+            .taste-subtitle {
+                font-size: 1rem;
+            }
+            
+            .preference-section {
+                padding: 1.5rem;
+            }
+            
+            .preference-title {
+                font-size: 1.3rem;
+            }
+            
+            .actions {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .skip-link {
+                margin-left: 0;
+            }
+            
+            .cuisine-emoji {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .taste-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            
+            .taste-item {
+                padding: 1rem;
+            }
+            
+            .cuisine-emoji {
+                font-size: 1.8rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .taste-name {
+                font-size: 0.9rem;
+            }
+            
+            .preference-section {
+                padding: 1.25rem;
+            }
+            
+            .preference-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="taste-container">
+        <div class="taste-header">
+            <h1 class="taste-title">Personalize Your Experience</h1>
+            <p class="taste-subtitle">Help us understand your food preferences so we can recommend dishes you'll love and provide a more personalized dining experience.</p>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-steps">
+                <span class="progress-step active">Cuisine</span>
+                <span class="progress-step">Favorites</span>
+                <span class="progress-step">Preferences</span>
+                <span class="progress-step">Complete</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 25%"></div>
+            </div>
+            <div class="progress-text">Step 1 of 4: Select your preferred cuisines</div>
+        </div>
+        
+        <!-- Step 1: Cuisine Preferences -->
+        <div id="step1" class="preference-section">
+            <h2 class="preference-title">Cuisine Preferences</h2>
+            <p class="preference-description">Select the cuisines you enjoy the most. This helps us tailor our recommendations to your taste.</p>
+            
+            <div class="taste-grid">
+                <div class="taste-item" data-cuisine="indian">
+                    <div class="cuisine-emoji">🍛</div>
+                    <div class="taste-name">Indian</div>
+                </div>
+                <div class="taste-item" data-cuisine="italian">
+                    <div class="cuisine-emoji">🍝</div>
+                    <div class="taste-name">Italian</div>
+                </div>
+                <div class="taste-item" data-cuisine="chinese">
+                    <div class="cuisine-emoji">🥢</div>
+                    <div class="taste-name">Chinese</div>
+                </div>
+                <div class="taste-item" data-cuisine="mexican">
+                    <div class="cuisine-emoji">🌮</div>
+                    <div class="taste-name">Mexican</div>
+                </div>
+                <div class="taste-item" data-cuisine="japanese">
+                    <div class="cuisine-emoji">🍱</div>
+                    <div class="taste-name">Japanese</div>
+                </div>
+                <div class="taste-item" data-cuisine="thai">
+                    <div class="cuisine-emoji">🍲</div>
+                    <div class="taste-name">Thai</div>
+                </div>
+                <div class="taste-item" data-cuisine="mediterranean">
+                    <div class="cuisine-emoji">🫒</div>
+                    <div class="taste-name">Mediterranean</div>
+                </div>
+                <div class="taste-item" data-cuisine="american">
+                    <div class="cuisine-emoji">🍔</div>
+                    <div class="taste-name">American</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="customCuisine">Other cuisine you enjoy (optional):</label>
+                <div class="input-icon" data-icon="🌍">
+                    <input type="text" id="customCuisine" placeholder="Enter your favorite cuisine">
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button id="step1Next" class="proceed-btn">Continue</button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Favorite Dishes -->
+        <div id="step2" class="preference-section" style="display: none;">
+            <h2 class="preference-title">Your Favorite Dishes</h2>
+            <p class="preference-description">Tell us about the foods you love the most so we can better understand your preferences.</p>
+            
+            <div class="form-group">
+                <label for="favoriteDish">What's your absolute favorite dish?</label>
+                <div class="input-icon" data-icon="🍽️">
+                    <input type="text" id="favoriteDish" placeholder="Enter your favorite dish">
+                </div>
+            </div>
+            
+            <!-- Removed redundant favorite cuisine question since users already selected cuisines in step 1 -->
+            
+            <div class="form-group">
+                <label>Spice Preference</label>
+                <p class="preference-description">How spicy do you like your food?</p>
+                
+                <div class="spice-options">
+                    <div class="spice-option" data-spice="mild">
+                        <span class="spice-icon">🌶️</span> Mild
+                    </div>
+                    <div class="spice-option" data-spice="medium">
+                        <span class="spice-icon">🌶️🌶️</span> Medium
+                    </div>
+                    <div class="spice-option" data-spice="hot">
+                        <span class="spice-icon">🌶️🌶️🌶️</span> Hot
+                    </div>
+                    <div class="spice-option" data-spice="extra-hot">
+                        <span class="spice-icon">🔥</span> Extra Hot
+                    </div>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <button id="step2Prev" class="skip-link">Back</button>
+                <button id="step2Next" class="proceed-btn">Continue</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Dietary Preferences -->
+        <div id="step3" class="preference-section" style="display: none;">
+            <h2 class="preference-title">Dietary Preferences & Allergies</h2>
+            <p class="preference-description">Help us ensure your dining experience is safe and enjoyable by sharing any dietary restrictions or allergies.</p>
+            
+            <div class="form-group">
+                <label>Dietary Preferences</label>
+                <p class="preference-description">Select any dietary restrictions or preferences you have:</p>
+                
+                <div class="taste-grid">
+                    <div class="taste-item" data-diet="vegetarian">
+                        <div class="cuisine-emoji">🥗</div>
+                        <div class="taste-name">Vegetarian</div>
+                    </div>
+                    <div class="taste-item" data-diet="vegan">
+                        <div class="cuisine-emoji">🌱</div>
+                        <div class="taste-name">Vegan</div>
+                    </div>
+                    <div class="taste-item" data-diet="gluten-free">
+                        <div class="cuisine-emoji">🌾</div>
+                        <div class="taste-name">Gluten-Free</div>
+                    </div>
+                    <div class="taste-item" data-diet="dairy-free">
+                        <div class="cuisine-emoji">🥛</div>
+                        <div class="taste-name">Dairy-Free</div>
+                    </div>
+                    <div class="taste-item" data-diet="keto">
+                        <div class="cuisine-emoji">🥓</div>
+                        <div class="taste-name">Keto</div>
+                    </div>
+                    <div class="taste-item" data-diet="paleo">
+                        <div class="cuisine-emoji">🥩</div>
+                        <div class="taste-name">Paleo</div>
+                    </div>
+                    <div class="taste-item" data-diet="none">
+                        <div class="cuisine-emoji">🍽️</div>
+                        <div class="taste-name">No Restrictions</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="customDiet">Other dietary restrictions (optional):</label>
+                <div class="input-icon" data-icon="🥄">
+                    <input type="text" id="customDiet" placeholder="Enter any other dietary restrictions">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="allergies">Food Allergies</label>
+                <p class="preference-description">Please list any food allergies or intolerances we should be aware of:</p>
+                <textarea id="allergies" placeholder="Examples: nuts, shellfish, dairy, etc."></textarea>
+            </div>
+            
+            <div class="actions">
+                <button id="step3Prev" class="skip-link">Back</button>
+                <button id="step3Next" class="proceed-btn">Continue</button>
+            </div>
+        </div>
+        
+        <!-- Step 4: Final Review -->
+        <div id="step4" class="preference-section" style="display: none;">
+            <h2 class="preference-title">Review Your Preferences</h2>
+            <p class="preference-description">Review and confirm your taste preferences before we save them.</p>
+            
+            <div class="form-group">
+                <h3 style="font-size: 1.2rem; color: var(--first-color); margin-bottom: 0.5rem;">Cuisine Preferences</h3>
+                <div id="cuisineSummary" style="margin-bottom: 1rem; padding-left: 1rem;"></div>
+            </div>
+            
+            <div class="form-group">
+                <h3 style="font-size: 1.2rem; color: var(--first-color); margin-bottom: 0.5rem;">Favorite Dish</h3>
+                <div id="dishesSummary" style="margin-bottom: 1rem; padding-left: 1rem;"></div>
+            </div>
+            
+            <div class="form-group">
+                <h3 style="font-size: 1.2rem; color: var(--first-color); margin-bottom: 0.5rem;">Dietary Preferences</h3>
+                <div id="dietSummary" style="margin-bottom: 1rem; padding-left: 1rem;"></div>
+            </div>
+            
+            <div class="form-group">
+                <h3 style="font-size: 1.2rem; color: var(--first-color); margin-bottom: 0.5rem;">Allergies</h3>
+                <div id="allergiesSummary" style="margin-bottom: 1rem; padding-left: 1rem;"></div>
+            </div>
+            
+            <div class="actions">
+                <button id="step4Prev" class="skip-link">Back</button>
+                <button id="savePreferencesBtn" class="proceed-btn">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <script type="module">
+        import { auth, getCurrentUserUID } from './assets/js/firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+        
+        // Protect page from direct access
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hide content initially
+            document.querySelector('.taste-container').style.display = 'none';
+            
+            // Check if user came from signup flow
+            const fromSignup = sessionStorage.getItem('fromSignup');
+            const isLoggedIn = localStorage.getItem('userId');
+            
+            if (!fromSignup && !isLoggedIn) {
+                // If accessed directly without proper flow, redirect to login
+                console.log('Unauthorized access attempt to taste profile');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // Verify with Firebase auth
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Show content if authenticated
+                    document.querySelector('.taste-container').style.display = 'block';
+                } else {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'login.html';
+                }
+            });
+            
+            // Global variables
+            const steps = [
+                document.getElementById('step1'),
+                document.getElementById('step2'),
+                document.getElementById('step3'),
+                document.getElementById('step4')
+            ];
+            
+            const progressFill = document.querySelector('.progress-fill');
+            const progressSteps = document.querySelectorAll('.progress-step');
+            const progressText = document.querySelector('.progress-text');
+            let currentStep = 0;
+            
+            // Form data
+            const formData = {
+                cuisines: [],
+                customCuisine: '',
+                favoriteDish: '',
+                spiceLevel: '',
+                dietaryRestrictions: [],
+                customDiet: '',
+                allergies: ''
+            };
+
+            // Navigation buttons
+            document.getElementById('step1Next').addEventListener('click', () => goToStep(1));
+            document.getElementById('step2Prev').addEventListener('click', () => goToStep(0));
+            document.getElementById('step2Next').addEventListener('click', () => goToStep(2));
+            document.getElementById('step3Prev').addEventListener('click', () => goToStep(1));
+            document.getElementById('step3Next').addEventListener('click', () => goToStep(3));
+            document.getElementById('step4Prev').addEventListener('click', () => goToStep(2));
+            
+            // Switch between steps
+            function goToStep(stepIndex) {
+                // Validate current step before proceeding
+                if (stepIndex > currentStep && !validateStep(currentStep)) {
+                    return false;
+                }
+                
+                // Save data from current step
+                saveStepData(currentStep);
+                
+                // Update UI
+                steps.forEach((step, index) => {
+                    step.style.display = index === stepIndex ? 'block' : 'none';
+                });
+                
+                // Update progress bar
+                const progressPercentage = ((stepIndex + 1) / steps.length) * 100;
+                progressFill.style.width = `${progressPercentage}%`;
+                
+                // Update progress steps
+                progressSteps.forEach((step, index) => {
+                    step.classList.toggle('active', index <= stepIndex);
+                });
+                
+                // Update progress text
+                const stepTexts = [
+                    "Step 1 of 4: Select your preferred cuisines",
+                    "Step 2 of 4: Share your favorite dishes",
+                    "Step 3 of 4: Dietary restrictions & allergies",
+                    "Step 4 of 4: Review and confirm"
+                ];
+                progressText.textContent = stepTexts[stepIndex];
+                
+                // If final step, populate summary
+                if (stepIndex === 3) {
+                    populateSummary();
+                }
+                
+                currentStep = stepIndex;
+                return true;
+            }
+            
+            // Validate step before proceeding
+            function validateStep(stepIndex) {
+                switch(stepIndex) {
+                    case 0:
+                        // Validate cuisines (at least one cuisine or custom cuisine)
+                        const selectedCuisines = document.querySelectorAll('#step1 .taste-item.selected');
+                        const customCuisine = document.getElementById('customCuisine').value.trim();
+                        
+                        if (selectedCuisines.length === 0 && customCuisine === '') {
+                            alert('Please select at least one cuisine or enter a custom cuisine');
+                            return false;
+                        }
+                        return true;
+                        
+                    case 1:
+                        // Validate favorite dish and spice level
+                        const favoriteDish = document.getElementById('favoriteDish').value.trim();
+                        const selectedSpice = document.querySelector('#step2 .spice-option.selected');
+                        
+                        if (favoriteDish === '' || !selectedSpice) {
+                            alert('Please enter your favorite dish and select a spice level');
+                            return false;
+                        }
+                        return true;
+                        
+                    case 2:
+                        // Validate dietary preferences and allergies
+                        const selectedDietary = document.querySelectorAll('#step3 .taste-item.selected');
+                        const customDiet = document.getElementById('customDiet').value.trim();
+                        const allergies = document.getElementById('allergies').value.trim();
+                        
+                        if (selectedDietary.length === 0 && customDiet === '' && allergies === '') {
+                            alert('Please select at least one dietary preference, enter a custom diet, or list any allergies');
+                            return false;
+                        }
+                        return true;
+                        
+                    default:
+                        return true;
+                }
+            }
+            
+            // Save data from current step
+            function saveStepData(stepIndex) {
+                switch(stepIndex) {
+                    case 0:
+                        formData.cuisines = Array.from(document.querySelectorAll('#step1 .taste-item.selected'))
+                            .map(item => item.dataset.cuisine);
+                        formData.customCuisine = document.getElementById('customCuisine').value.trim();
+                        break;
+                        
+                    case 1:
+                        formData.favoriteDish = document.getElementById('favoriteDish').value.trim();
+                        formData.spiceLevel = document.querySelector('#step2 .spice-option.selected').dataset.spice;
+                        break;
+                        
+                    case 2:
+                        formData.dietaryRestrictions = Array.from(document.querySelectorAll('#step3 .taste-item.selected'))
+                            .map(item => item.dataset.diet);
+                        formData.customDiet = document.getElementById('customDiet').value.trim();
+                        formData.allergies = document.getElementById('allergies').value.trim();
+                        break;
+                }
+            }
+            
+            // Populate summary on final step
+            function populateSummary() {
+                document.getElementById('cuisineSummary').textContent = formData.cuisines.join(', ') || 'None';
+                document.getElementById('dishesSummary').innerHTML = `
+                    <p><strong>Favorite Dish:</strong> ${formData.favoriteDish || 'None'}</p>
+                    <p><strong>Spice Level:</strong> ${formData.spiceLevel || 'None'}</p>
+                `;
+                document.getElementById('dietSummary').textContent = formData.dietaryRestrictions.join(', ') || 'None';
+                document.getElementById('allergiesSummary').textContent = formData.allergies || 'None';
+            }
+            
+            // Save preferences button
+            document.getElementById('savePreferencesBtn').addEventListener('click', async () => {
+                // Show loading overlay
+                document.getElementById('loadingOverlay').classList.add('show');
+                
+                try {
+                    // Save data from current step
+                    saveStepData(currentStep);
+                    
+                    // Get user ID from Firebase or localStorage
+                    const userId = getCurrentUserUID() || localStorage.getItem('userId') || 'custab0000';
+                    
+                    // Determine favorite cuisine (use first selected cuisine or custom cuisine)
+                    const favCuisine = formData.cuisines.length > 0 ? 
+                        formData.cuisines[0].charAt(0).toUpperCase() + formData.cuisines[0].slice(1) : 
+                        (formData.customCuisine || 'None');
+                    
+                    // Determine dietary restriction (use first selected restriction or custom diet)
+                    const restriction = formData.dietaryRestrictions.length > 0 ? 
+                        formData.dietaryRestrictions[0].charAt(0).toUpperCase() + formData.dietaryRestrictions[0].slice(1) : 
+                        (formData.customDiet || 'None');
+                    
+                    // Format spice level with first letter capitalized
+                    const spiciness = formData.spiceLevel.charAt(0).toUpperCase() + formData.spiceLevel.slice(1);
+                    
+                    // Create the API payload in the exact format required
+                    const apiPayload = {
+                        client_id: userId,
+                        fav_cuisine: favCuisine,
+                        fav_dish: formData.favoriteDish || 'None',
+                        restrictions: restriction,
+                        allergies: formData.allergies || 'None',
+                        spiciness: spiciness
+                    };
+                    
+                    console.log('Sending taste profile data to API:', apiPayload);
+                    
+                    // Send the API request
+                    const response = await fetch('https://sufficient-misty-cppnomnomstation-293dc6c4.koyeb.app/api/taste-palette', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(apiPayload)
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Taste profile saved successfully');
+                    } else {
+                        console.error('Failed to save taste profile:', response.status, response.statusText);
+                    }
+                    
+                    // Save preferences to localStorage (for local use)
+                    const preferences = {
+                        cuisines: formData.cuisines,
+                        customCuisine: formData.customCuisine,
+                        favoriteDish: formData.favoriteDish,
+                        spiceLevel: formData.spiceLevel,
+                        dietaryRestrictions: formData.dietaryRestrictions,
+                        customDiet: formData.customDiet,
+                        allergies: formData.allergies,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('userPreferences', JSON.stringify(preferences));
+                    localStorage.setItem('tasteProfileComplete', 'true');
+                    localStorage.setItem('tasteProfileApiData', JSON.stringify(apiPayload));
+                    
+                } catch (error) {
+                    console.error('Error saving taste profile:', error);
+                } finally {
+                    // Redirect to success page regardless of API success
+                    window.location.href = 'signup-success.html';
+                }
+            });
+            
+            // Cuisine and dietary preference selection
+            const tasteItems = document.querySelectorAll('.taste-item');
+            tasteItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // For dietary items, only allow one selection except cuisine
+                    if (item.dataset.diet && item.dataset.diet !== 'none') {
+                        // For diet items, allow multiple except "No Restrictions"
+                        if (item.classList.contains('selected')) {
+                            item.classList.remove('selected');
+                        } else {
+                            // If selecting "No Restrictions", deselect all others
+                            if (item.dataset.diet === 'none') {
+                                document.querySelectorAll('.taste-item[data-diet]').forEach(dietItem => {
+                                    dietItem.classList.remove('selected');
+                                });
+                            } else {
+                                // If selecting any other diet option, deselect "No Restrictions"
+                                document.querySelector('.taste-item[data-diet="none"]')?.classList.remove('selected');
+                            }
+                            item.classList.add('selected');
+                        }
+                    } else if (item.dataset.cuisine) {
+                        // For cuisine items, allow multiple selections
+                        item.classList.toggle('selected');
+                    } else if (item.dataset.diet === 'none') {
+                        // For "No Restrictions", deselect all other diet options
+                        document.querySelectorAll('.taste-item[data-diet]').forEach(dietItem => {
+                            dietItem.classList.remove('selected');
+                        });
+                        item.classList.add('selected');
+                    }
+                });
+            });
+
+            // Spice level selection
+            const spiceOptions = document.querySelectorAll('.spice-option');
+            spiceOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    spiceOptions.forEach(opt => opt.classList.remove('selected'));
+                    // Add selected class to clicked option
+                    option.classList.add('selected');
+                });
+            });
+
+            // Check if user came from signup
+            if (!sessionStorage.getItem('fromSignup')) {
+                // If not from signup flow, add a back button
+                const actionsDiv = document.querySelector('.actions');
+                const backBtn = document.createElement('a');
+                backBtn.href = 'index.html';
+                backBtn.className = 'skip-link';
+                backBtn.style.marginTop = '1rem';
+                backBtn.textContent = 'Back to Home';
+                actionsDiv.appendChild(backBtn);
+            }
+        });
+    </script>
+</body>
+</html>

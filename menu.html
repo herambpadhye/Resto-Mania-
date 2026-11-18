@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NomNom Station Menu</title>
+  <!-- Add Google Fonts Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script type="module" src="assets/js/firebase-config.js"></script>
+  <script type="module" src="assets/js/auth.js"></script>
+  <link rel="stylesheet" href="assets/css/popup.css">
+  <link rel="stylesheet" href="assets/css/menu.css">
+
+</head>
+<body>
+  <!-- Replace the existing login popup with this one -->
+  <div id="loginPopup" style="display: none;">
+    <div class="popup-overlay"></div>
+    <div class="login-popup">
+      <h2 class="popup-title">🌟 Join the Flavor Journey!</h2>
+      <p class="popup-message">Login to unlock full menu features, save your favorites, and start your culinary adventure with NomNom Station.</p>
+      <button class="popup-button" onclick="window.location.href='login.html?redirect=menu'">Let's Get Started</button>
+    </div>
+  </div>
+
+  <div id="mainContent">
+    <nav class="navbar">
+      <div class="nav-container">
+        <a href="index.html" class="logo">Menu</a>
+        <div class="nav-links">
+          <a href="#starters">Starters</a>
+          <a href="#mainCourse">Main Course</a>
+          <a href="#beverages">Beverages</a>
+          <a href="#desserts">Desserts</a>
+        </div>
+        <div class="nav-right">
+          <div class="header-actions">
+            <button id="theme-toggle" class="material-icons">dark_mode</button>
+          </div>
+          <input type="text" class="search-bar" placeholder="Search menu items..." id="searchInput">
+        </div>
+      </div>
+    </nav>
+
+    <div id="menu-container"></div>
+  </div>
+
+  <script type="module">
+    import { auth, getCurrentUserUID } from './assets/js/firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+
+    let globaluid = null;
+
+    // Update loading state with spinner only
+    const mainContent = document.getElementById('mainContent');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.innerHTML = `
+        <div style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">
+            <div style="margin-bottom:1.5rem; font-family:'Poppins',sans-serif; color:var(--first-color);">
+                <h2 style="font-size:1.5rem; margin-bottom:0.5rem;">🍽️ Setting the table...</h2>
+                <p style="color:var(--text-color); font-size:1rem;">Your culinary journey begins in moments</p>
+            </div>
+            <div style="width:40px; height:40px; border:3px solid #eee; border-top:3px solid var(--first-color); border-radius:50%; margin:0 auto; animation:spin 1s linear infinite;"></div>
+        </div>
+    `;
+
+    // Add animation keyframes
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+    document.body.appendChild(loadingDiv);
+
+    // Hide content initially
+    mainContent.style.display = 'none';
+
+    // Set timeout to 4 seconds
+    const authTimeout = setTimeout(() => {
+        loadingDiv.remove();
+        window.location.replace('login.html?redirect=menu&error=timeout');
+    }, 4000);
+
+    // Check auth state
+    onAuthStateChanged(auth, (user) => {
+        clearTimeout(authTimeout); // Clear timeout since we got a response
+
+        if (user) {
+            // User is signed in
+            globaluid = getCurrentUserUID();
+            loadingDiv.remove();
+            mainContent.style.display = 'block';
+            initializeMenu();
+            initializeBotpress();
+        } else {
+            // No user is signed in
+            loadingDiv.remove();
+            window.location.replace('login.html?redirect=menu');
+        }
+    }, (error) => {
+        // Error handling
+        console.error('Auth state check failed:', error);
+        clearTimeout(authTimeout);
+        loadingDiv.remove();
+        window.location.replace('login.html?redirect=menu&error=auth');
+    });
+    
+    function initializeBotpress() {
+        window.botpress.init({
+            "botId": "85e18f93-962e-4950-b06f-2b71544c76bc",
+            "configuration": {
+                "composerPlaceholder": "Chat with bot",
+                "botName": "Restaurant AI",
+                "botAvatar": "",
+                "botDescription": "A chat-bot designed to make reservations and order of a small scale restaurant.",
+                "website": {},
+                "email": {
+                  "title": "resto@nomnom.station",
+                  "link": "resto@nomnom.station"
+                },
+                "phone": {},
+                "termsOfService": {},
+                "privacyPolicy": {},
+                "color": "#2d835f",
+                "variant": "solid",
+                "themeMode": document.body.classList.contains('dark-theme') ? "dark" : "light",
+                "fontFamily": "inter",
+                "radius": 3,
+                "showPoweredBy": true,
+                "additionalStylesheetUrl": "https://files.bpcontent.cloud/2025/01/08/17/20250108172745-QA1MIYKH.css"
+            },
+            "clientId": "06613e9e-a02a-442f-b4d5-5a14cec8573b",
+            "user": {
+                "data": {
+                    "userid": globaluid || "Guest00"
+                }
+            }
+        });
+        
+        console.log("Botpress initialized with user ID:", globaluid);
+    }
+
+    function initializeMenu() {
+        // Replace the theme toggle functionality with the consistent implementation
+        const themeButton = document.getElementById('theme-toggle');
+        const darkTheme = 'dark-theme';
+        const iconTheme = 'light_mode';
+
+        // Previously selected topic (if user selected)
+        const selectedTheme = localStorage.getItem('selected-theme');
+        const selectedIcon = localStorage.getItem('selected-icon');
+
+        // We obtain the current theme that the interface has by validating the dark-theme class
+        const getCurrentTheme = () => document.body.classList.contains(darkTheme) ? 'dark' : 'light';
+        const getCurrentIcon = () => themeButton.textContent === 'light_mode' ? 'light_mode' : 'dark_mode';
+
+        // We validate if the user previously chose a topic
+        if (selectedTheme) {
+            // If the validation is fulfilled, we ask what the issue was to know if we activated or deactivated the dark
+            document.body.classList[selectedTheme === 'dark' ? 'add' : 'remove'](darkTheme);
+            themeButton.textContent = selectedTheme === 'dark' ? 'light_mode' : 'dark_mode';
+        }
+
+        // Activate / deactivate the theme manually with the button
+        themeButton.addEventListener('click', () => {
+            // Add or remove the dark / icon theme
+            document.body.classList.toggle(darkTheme);
+            themeButton.textContent = document.body.classList.contains(darkTheme) ? 'light_mode' : 'dark_mode';
+            
+            // We save the theme and the current icon that the user chose
+            localStorage.setItem('selected-theme', getCurrentTheme());
+            localStorage.setItem('selected-icon', getCurrentIcon());
+            
+            // Update Botpress theme when dark mode changes
+            if (window.botpress) {
+                window.botpress.update({
+                    configuration: {
+                        themeMode: document.body.classList.contains(darkTheme) ? "dark" : "light"
+                    }
+                });
+            }
+        });
+
+        const menuData = {
+          starters: {
+            title: "Starters",
+            items: [
+              {
+                name: "Paneer Tikka",
+                description: "Cottage cheese marinated in yogurt and spices, grilled in a tandoor",
+                price: "299",
+                image: "/assets/img/starters/Paneer Tikka.jpeg",
+                isVeg: false
+              },
+              {
+                name: "Stuffed Mushrooms",
+                description: "Mushrooms filled with cheese and herbs, baked to perfection",
+                price: "249",
+                image: "/assets/img/starters/Stuffed Mushroom.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Bruschetta",
+                description: "Toasted bread with tomatoes and basil",
+                price: "199",
+                image: "/assets/img/starters/Caprese Bruschetta.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Cheesy Malai Broccoli",
+
+                description: "broccoli florets in a creamy cheese sauce",
+                price: "279",
+                image: "/assets/img/starters/Cheesy Malai Broccoli.jpeg",
+                isVeg: false
+              },
+              {
+                name: "Zaatar & Hummus Pita",
+                description: "Pita bread with zaatar spice and hummus",
+                price: "249",
+                image: "/assets/img/starters/Zaatar & Hummus Pita.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Dahi Puri Shots",
+                description: "Mini puris filled with yogurt, chutney, and spices",
+                price: "179",
+                image: "/assets/img/starters/Dahi Puri Shots.jpeg",
+                isVeg: false
+              },
+              {
+                name: "Peri Peri Fries",
+                description: "Spicy fries with peri peri seasoning",
+                price: "199",
+                image: "/assets/img/starters/Peri Peri Fries.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Crispy Tandoori Momos",
+                description: "Fried momos with tandoori spices",
+                price: "229",
+                image: "/assets/img/starters/Crispy Tandoori Momos.jpeg",
+                isVeg: false
+              },
+              {
+                name: "Thai Basil Tofu",
+                description: "Crispy tofu with Thai basil sauce",
+                price: "249",
+                image: "/assets/img/starters/Thai Basil Tofu.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Vegitable Spring Rolls",
+                description: "Crispy rolls filled with vegetables and noodles",
+                price: "219",
+                image: "/assets/img/starters/Vegetable Spring Rolls.jpeg",
+                isVeg: false
+              }
+            ]
+          },
+          mainCourse: {
+            title: "Main Course",
+            items: [
+              {
+                name: "Dal tadka",
+                description:"Yellow lentils tempered with cumin, garlic, and spices",
+                price: "299",
+                image: "/assets/img/main course/Dal tadka.jpeg",
+                isVeg: false
+              },
+              {
+                name: "Dal Makhani",
+                description: "Black lentils simmered with butter and cream",
+                price: "349",
+                image: "/assets/img/main course/Dal Makhani.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Chana Masala",
+                description: " Chickpeas in a spicy tomato gravy",
+                price: "279",
+                image: "/assets/img/main course/Chana Masala.jpeg",
+                isVeg: false
+              },
+              {
+                name: "Kaju Masala",
+                description: "Cashews in a rich tomato and cream sauce",
+                price: "399",
+                image: "/assets/img/main course/Kaju Masala.jpeg",
+                isVeg: true
+              },
+              {
+                name: "palak Paneer",
+                description: "With red wine sauce",
+                price: "349",
+                image: "/assets/img/main course/Palak Paneer.jpeg",
+                isVeg: false
+              },
+              {
+                name: "paneer butter masala",
+                description: "Cottage cheese in a rich tomato and cream sauce",
+                price: "369",
+                image: "/assets/img/main course/paneer butter masala.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Paneer Kofta",
+                description: "Cottage cheese dumplings in a creamy tomato gravy",
+                price: "379",
+                image: "/assets/img/main course/Paneer Kofta.jpeg",
+                isVeg: false
+              },
+              {
+                name: "Paneer Lababdar",
+                description: "Cottage cheese in a rich tomato and cream sauce",
+                price: "389",
+                image: "/assets/img/main course/Paneer Lababdar.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Stuffed Smokey Aubergine Bayildi",
+                description: "Eggplant stuffed with vegetables and spices",
+                price: "329",
+                image: "/assets/img/main course/Stuffed Smokey Aubergine Bayildi.jpeg",
+                isVeg: false
+              },
+              {
+                name: "Vegetables in Hot Garlic Sauce",
+                description: "Mixed vegetables in a spicy garlic sauce",
+                price: "299",
+                image: "/assets/img/main course/Vegetables in Hot Garlic Sauce.jpeg",
+                isVeg: true
+              }
+            ]
+          },
+          beverages: {
+            title: "Beverages",
+            items: [
+              {
+                name: "Almond Milk",
+                description: "House-made almond milk",
+                price: "199",
+                image: "/assets/img/beverages/Creamy Almond Milk.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Rose Lassi",
+                description: "Rose-flavored yogurt drink",
+                price: "149",
+                image: "/assets/img/beverages/Rose lassi.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Expresso",
+                description: "Strong black coffee",
+                price: "129",
+                image: "/assets/img/beverages/espresso.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Biscoff milkshake",
+                description: "Cookie butter milkshake",
+                price: "249",
+                image: "/assets/img/beverages/Biscoff milkshake.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Cold Coffee",
+                description: "Iced coffee with cream",
+                price: "179",
+                image: "/assets/img/beverages/cold coffee.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Virgin Mojito",
+                description: "Mint and lime cooler",
+                price: "169",
+                image: "/assets/img/beverages/Virgin Mojito.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Blackberry Lemonade",
+                description: "Fresh blackberry lemonade",
+                price: "159",
+                image: "/assets/img/beverages/Blackberry Lemonade.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Lemon Bliss",
+                description: "Lemon and mint cooler",
+                price: "149",
+                image: "/assets/img/beverages/Lemon Bliss.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Masala Chaas",
+                description: "Spiced buttermilk",
+                price: "99",
+                image: "/assets/img/beverages/Masala Chaas.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Kokum Sharbat",
+                description: "Kokum juice with spices",
+                price: "129",
+                image: "/assets/img/beverages/Kokum Juice.jpeg",
+                isVeg: true
+              }
+            ]
+          },
+          desserts: {
+            title: "Desserts",
+            items: [
+              {
+                name: "Gajar Halwa",
+                description: "Carrot pudding with nuts and cardamom",
+                price: "199",
+                image: "/assets/img/Dessert/Gajar Halwa.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Gulab Jamun",
+                description: "Fried milk balls in sugar syrup",
+                price: "149",
+                image: "/assets/img/Dessert/gulab jamun.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Basundi",
+                description: "Sweetened condensed milk dessert",
+                price: "169",
+                image: "/assets/img/Dessert/Basundi.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Kalakand",
+                description: "Milk cake with saffron and nuts",
+                price: "189",
+                image: "/assets/img/Dessert/kalakand.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Mango Shrikhand",
+                description: "Mango-flavored strained yogurt",
+                price: "179",
+                image: "/assets/img/Dessert/Mango Shrikhand.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Moong Dal Halwa",
+                description: "Mung bean pudding with ghee and nuts",
+                price: "199",
+                image: "/assets/img/Dessert/Moong Dal Halwa.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Rabdi",
+                description: "Sweet thickened milk",
+                price: "169",
+                image: "/assets/img/Dessert/Rabdi (Sweet Thickened Milk).jpeg",
+                isVeg: true
+              },
+              {
+                name: "Rasgulla",
+                description: "Spongy cottage cheese balls in sugar syrup",
+                price: "149",
+                image: "/assets/img/Dessert/Rasgulla.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Ukadiche Modak",
+                description: "Steamed rice flour dumplings with coconut and jaggery",
+                price: "179",
+                image: "/assets/img/Dessert/Ukadiche Modak.jpeg",
+                isVeg: true
+              },
+              {
+                name: "Rasmalai",
+                description: "Soft cottage cheese dumplings in sweetened milk",
+                price: "189",
+                image: "/assets/img/Dessert/Rasmalai.jpeg",
+                isVeg: true
+              }
+            ]
+          }
+        };
+
+        const searchInput = document.getElementById('searchInput');
+
+        function filterMenuItems() {
+          const searchTerm = searchInput.value.toLowerCase();
+
+          document.querySelectorAll('.card').forEach(card => {
+            const name = card.querySelector('.head').textContent.toLowerCase();
+            const description = card.querySelector('.description').textContent.toLowerCase();
+            const matchesSearch = name.includes(searchTerm) || description.includes(searchTerm);
+            card.style.display = matchesSearch ? 'flex' : 'none';
+          });
+        }
+
+        searchInput.addEventListener('input', filterMenuItems);
+
+        const menuContainer = document.getElementById('menu-container');
+
+        Object.entries(menuData).forEach(([key, section], sectionIndex) => {
+          const sectionElement = document.createElement('section');
+          sectionElement.className = 'menu-section';
+          sectionElement.id = key;
+
+          sectionElement.innerHTML = `
+            <h2 class="section-title">${section.title}</h2>
+            <div class="menu-grid">
+              ${section.items.map((item, index) => `
+                <div class="dish-wrapper">
+                  <div class="card" onclick="toggleCard(this)">
+                    <img class="img" src="${item.image}" alt="${item.name}">
+                    <div class="textBox">
+                      <span class="head">${item.name}</span>
+                      <span class="description">${item.description}</span>
+                      <span class="price">₹${item.price}</span>
+                    </div>
+                  </div>
+                  <span class="dish-name">${item.name}</span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+
+          menuContainer.appendChild(sectionElement);
+        });
+
+        // Add touch event handling for mobile devices
+        function handleCardInteraction(card, isMobile) {
+          // Remove active state from all other cards
+          document.querySelectorAll('.card').forEach(c => {
+            if (c !== card) {
+              c.classList.remove('active');
+              const dishName = c.parentElement.querySelector('.dish-name');
+              if (dishName) dishName.classList.remove('hidden');
+            }
+          });
+
+          if (isMobile) {
+            // Toggle active state on the clicked card
+            const wasActive = card.classList.contains('active');
+            card.classList.toggle('active');
+            const dishName = card.parentElement.querySelector('.dish-name');
+            if (dishName) {
+              dishName.classList.toggle('hidden', !wasActive);
+            }
+          }
+        }
+
+        // Update the card click handler
+        function toggleCard(card) {
+          const isMobile = window.innerWidth <= 1023;
+          handleCardInteraction(card, isMobile);
+        }
+
+        // Make toggleCard available globally
+        window.toggleCard = toggleCard;
+
+        // Add event listeners after creating the menu cards
+        function addCardListeners() {
+          const cards = document.querySelectorAll('.card');
+          cards.forEach(card => {
+            // Handle hover on desktop
+            if (window.innerWidth > 1023) {
+              card.addEventListener('mouseenter', () => handleCardInteraction(card, false));
+              card.addEventListener('mouseleave', () => {
+                card.classList.remove('active');
+                const dishName = card.parentElement.querySelector('.dish-name');
+                if (dishName) dishName.classList.remove('hidden');
+              });
+            }
+          });
+        }
+
+        // Call addCardListeners after creating the menu
+        setTimeout(addCardListeners, 0);
+
+        // Update listeners on window resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            document.querySelectorAll('.card').forEach(card => {
+              card.classList.remove('active');
+              const dishName = card.parentElement.querySelector('.dish-name');
+              if (dishName) dishName.classList.remove('hidden');
+            });
+            addCardListeners();
+          }, 250);
+        });
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.section-title').forEach(title => {
+          observer.observe(title);
+        });
+
+        document.querySelectorAll('.nav-links a').forEach(anchor => {
+          anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetSection = document.getElementById(targetId);
+            
+            if (targetSection) {
+              targetSection.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+              });
+              
+              // Update URL without jumping
+              history.pushState(null, null, `#${targetId}`);
+            }
+          });
+        });
+    }
+  </script>
+  <script src="https://cdn.botpress.cloud/webchat/v2.2/inject.js"></script>
+  <div id="bp-widget"></div>
+</body>
+</html>

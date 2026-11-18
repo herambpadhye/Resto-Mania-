@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Successful - NomNom Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <style>
+        .success-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .success-card {
+            background-color: #fff;
+            border-radius: 1rem;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .success-icon {
+            font-size: 5rem;
+            color: var(--first-color);
+            margin-bottom: 1rem;
+        }
+        
+        .success-title {
+            color: var(--first-color);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .success-message {
+            color: var(--text-color);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .secondary-button {
+            background-color: #f1f1f1;
+            color: var(--text-color);
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .secondary-button:hover {
+            background-color: #e1e1e1;
+        }
+
+        @media (max-width: 768px) {
+            .success-card {
+                padding: 2rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .button, .secondary-button {
+                width: 100%;
+            }
+        }
+
+        /* Remove countdown styles - START */
+        /*
+        .countdown {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-color-light);
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .pulse-animation {
+            animation: pulse 1.5s infinite;
+        }
+        */
+        /* Remove countdown styles - END */
+    </style>
+</head>
+<body>
+    <div class="success-container" style="display: none;">
+        <div class="success-card">
+            <div class="success-icon">🎉</div>
+            <h1 class="success-title">Registration Successful!</h1>
+            <p class="success-message">
+                Welcome to NomNom Station! Your account has been successfully created. 
+                You're now ready to explore our delicious menu and enjoy the full restaurant experience.
+            </p>
+            <div class="action-buttons">
+                <a href="menu.html" class="button">Browse Menu</a>
+                <a href="index.html" class="secondary-button">Go to Homepage</a>
+            </div>
+            <!-- Remove countdown element - START -->
+            <!-- 
+            <div class="countdown" id="countdown">
+                Redirecting to menu in <span id="timer" class="pulse-animation">10</span> seconds...
+            </div>
+            -->
+            <!-- Remove countdown element - END -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './assets/js/firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+        
+        // Protect page from direct access
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if proper flow was followed
+            const isNewUser = localStorage.getItem('isNewUser');
+            const userId = localStorage.getItem('userId');
+            
+            if (!isNewUser || !userId) {
+                // If accessed directly without registration, redirect to homepage
+                console.log('Unauthorized access attempt to signup success page');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Verify with Firebase auth
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // User is authenticated, display content
+                    document.querySelector('.success-container').style.display = 'flex';
+                    
+                    // Display user name if available
+                    const userName = localStorage.getItem('userName');
+                    const successTitle = document.querySelector('.success-title');
+                    
+                    if (userName) {
+                        successTitle.textContent = `Welcome, ${userName}!`;
+                    }
+                    
+                    // Clear the isNewUser flag to prevent future direct access
+                    localStorage.removeItem('isNewUser');
+                } else {
+                    // Not authenticated, redirect
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasty Food - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script type="module" src="assets/js/firebase-config.js"></script>
+    <script type="module" src="assets/js/auth.js"></script>
+    <style>
+        .error-message {
+            color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+            display: none;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            position: relative;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .auth-button.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .auth-button.loading::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="logo">
+                <img src="assets/img/logo.png" alt="Tasty Food Logo">
+            </div>
+            
+            <form id="loginForm" class="auth-form">
+                <div class="auth-header">
+                    <h1>Welcome Back</h1>
+                    <p>Please login to your account</p>
+                </div>
+                
+                <div id="error-message" class="error-message" style="display: none;"></div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                
+                <div class="forgot-password">
+                    <a href="#" id="forgot-password-link">Forgot Password?</a>
+                </div>
+                
+                <button type="submit" class="auth-button">Login</button>
+                
+                <div class="auth-switch">
+                    Don't have an account? <a href="signup.html">Sign up</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="auth-header">
+                <h1>Reset Password</h1>
+                <p>Enter your email to receive reset instructions</p>
+            </div>
+            <form id="forgotPasswordForm">
+                <div class="form-group">
+                    <label for="forgotEmail">Email</label>
+                    <input type="email" id="forgotEmail" required>
+                </div>
+                <button type="submit" class="auth-button">Send Reset Link</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="auth-header">
+                <h1>Reset Password</h1>
+                <p>Enter your email to receive reset instructions</p>
+            </div>
+            <form id="resetPasswordForm">
+                <div class="form-group">
+                    <label for="resetEmail">Email</label>
+                    <input type="email" id="resetEmail" required>
+                </div>
+                <button type="submit" class="auth-button">Send Reset Link</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './assets/js/firebase-config.js';
+        import { onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js";
+
+        // Check if already logged in
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const params = new URLSearchParams(window.location.search);
+                const redirect = params.get('redirect');
+                if (redirect) {
+                    window.location.href = `${redirect}.html`;
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }
+        });
+
+        // Handle login form submission
+        const loginForm = document.getElementById('loginForm');
+        const errorDiv = document.getElementById('error-message');
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const submitButton = loginForm.querySelector('button[type="submit"]');
+
+                try {
+                    // Clear previous error and disable button
+                    errorDiv.style.display = 'none';
+                    submitButton.disabled = true;
+                    submitButton.classList.add('loading');
+
+                    // Attempt login
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    
+                    if (userCredential.user) {
+                        // Get redirect URL
+                        const params = new URLSearchParams(window.location.search);
+                        const redirect = params.get('redirect');
+                        
+                        // Store auth state
+                        localStorage.setItem('isLoggedIn', 'true');
+                        
+                        // Redirect after successful login
+                        if (redirect) {
+                            window.location.href = `${redirect}.html`;
+                        } else {
+                            window.location.href = 'index.html';
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Login error:', error);
+                    let errorMessage = 'Login failed. Please check your credentials.';
+                    
+                    if (error.code) {
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                errorMessage = 'No account found with this email';
+                                break;
+                            case 'auth/wrong-password':
+                                errorMessage = 'Incorrect password';
+                                break;
+                            case 'auth/too-many-requests':
+                                errorMessage = 'Too many failed attempts. Please try again later';
+                                break;
+                        }
+                    }
+                    
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.style.display = 'block';
+                    
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('loading');
+                }
+            });
+        }
+
+        // ...existing modal handlers...
+    </script>
+</body>
+</html>

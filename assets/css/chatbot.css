@@ -1,0 +1,14 @@
+.chatbot-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 500px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    border: 2px solid var(--first-color);
+    background-color: var(--container-color);
+    border-radius: .5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
